@@ -57,7 +57,8 @@ module ParallelTests
       Tempfile.open 'parallel_tests-lock' do |lock|
         ParallelTests.with_pid_file do
           simulate_output_for_ci options[:serialize_stdout] do
-            Parallel.map_with_index(items, in_threads: num_processes) do |item, index|
+            threads_count = options[:maximum_parallel] ? options[:maximum_parallel].to_i : num_processes
+            Parallel.map_with_index(items, in_threads: threads_count) do |item, index|
               result = yield(item, index)
               reprint_output(result, lock.path) if options[:serialize_stdout]
               ParallelTests.stop_all_processes if options[:fail_fast] && result[:exit_status] != 0
@@ -295,6 +296,7 @@ module ParallelTests
         opts.on("--no-symlinks", "Do not traverse symbolic links to find test files") { options[:symlinks] = false }
         opts.on('--ignore-tags PATTERN', 'When counting steps ignore scenarios with tags that match this pattern') { |arg| options[:ignore_tag_pattern] = arg }
         opts.on("--nice", "execute test commands with low priority.") { options[:nice] = true }
+        opts.on("--maximum-parallel COUNT", "The maximum number of parallel_specs, helps when running a large amount of specs") { |n| options[:maximum_parallel] = n }
         opts.on("--runtime-log PATH", "Location of previously recorded test runtimes") { |path| options[:runtime_log] = path }
         opts.on("--allowed-missing COUNT", Integer, "Allowed percentage of missing runtimes (default = 50)") { |percent| options[:allowed_missing_percent] = percent }
         opts.on('--allow-duplicates', 'When detecting files to run, allow duplicates') { options[:allow_duplicates] = true }
