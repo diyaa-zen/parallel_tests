@@ -59,7 +59,9 @@ module ParallelTests
           simulate_output_for_ci options[:serialize_stdout] do
             threads_count = options[:maximum_parallel] ? options[:maximum_parallel].to_i : num_processes
             Parallel.map_with_index(items, in_threads: threads_count) do |item, index|
+              puts "PATCH: Process started running #{index}"
               result = yield(item, index)
+              puts "PATCH: Process started running #{result.inspect}"
               reprint_output(result, lock.path) if options[:serialize_stdout]
               ParallelTests.stop_all_processes if options[:fail_fast] && result[:exit_status] != 0
               result
